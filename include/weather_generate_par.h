@@ -33,7 +33,7 @@
 #define SEC_2_HFHR 1800.0
 #define NTIMESTEPS 48
 #define SW_2_PAR_MJ 0.5 /* conversion from SW MJ m-2 d-1 to PAR MJ m-2 d-1 */
-
+#define HLFHR_2_SEC 1.0 / 1800.0
 
 void   estimate_dirunal_par(float, float, int, float, float *);
 float  calc_day_length(int, int, float);

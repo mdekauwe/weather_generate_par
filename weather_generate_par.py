@@ -27,6 +27,7 @@ class WeatherGeneratorPAR(object):
         self.SEC_2_DAY = 86400.0
         self.MJ_TO_J = 1E6
         self.DAY_2_SEC = 1.0 / self.SEC_2_DAY
+        self.HLFHR_2_SEC = 1.0 / 1800.0
         self.J_TO_UMOL = 4.57
         self.UMOL_TO_J = 1.0 / self.J_TO_UMOL
         self.UMOLPERJ = 4.57     # Conversion from J to umol quanta
@@ -45,15 +46,12 @@ class WeatherGeneratorPAR(object):
         diffuse_frac = self.spitters(doy, par_day, cos_zenith)
         par = self.estimate_dirunal_par(par_day, cos_zenith, diffuse_frac)
 
-        par_old = self.estimate_dirunal_par_old(lat, doy, sw_rad_day)
-
         # check disaggregation
         print sw_rad_day, np.sum(par * self.PAR_2_SW * self.J_TO_MJ * self.SEC_2_DAY), "MJ m-2 d-1"
         print sw_rad_day * self.MJ_TO_J * self.DAY_2_SEC * self.SW_2_PAR, np.sum(par), "umol m-2 s-1"
 
 
         plt.plot(np.arange(1,48+1), par, "b-")
-        plt.plot(np.arange(1,48+1), par_old, "r-")
         plt.ylabel("par (umol m$^{-2}$ s$^{-1}$)")
         plt.xlabel("Hour of day")
         plt.show()
@@ -114,8 +112,8 @@ class WeatherGeneratorPAR(object):
             else:
                 rddf = 0.0
 
-            # MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1
-            conv = self.MJ_TO_J * self.DAY_2_SEC * self.UMOLPERJ
+            # MJ m-2 30min-1 -> J m-2 s-1 -> umol m-2 s-1
+            conv = self.MJ_TO_J * self.HLFHR_2_SEC * self.UMOLPERJ
             par[i] = (rddf + rdbm) * conv
 
         return par
@@ -388,84 +386,6 @@ class WeatherGeneratorPAR(object):
 
         return (diffuse_frac)
 
-
-    def estimate_dirunal_par_old(self, lat, doy, sw_rad_day):
-
-        # Solar constant [MJ/m2/day]
-        solar_constant = 1370.0 * self.SEC_2_DAY / 1E6
-
-        # convert to radians
-        rlat  = lat * np.pi / 180.0
-        ryear = 2.0 * np.pi * (doy - 1.0) / 365.0
-
-        # Declination in radians (Paltridge and Platt eq [3.7])
-        rdec = (0.006918 - 0.399912 * np.cos(ryear) + 0.070257 *
-                np.sin(ryear) - 0.006758 * np.cos(2.0 * ryear) +
-                0.000907 * np.sin(2.0 * ryear) - 0.002697 *
-                np.cos(3.0  *ryear) + 0.001480 * np.sin(3.0 * ryear))
-
-        # Declination in degrees
-        dec = (180.0 / np.pi) * rdec
-
-        hour_angle = -np.tan(rlat) * np.tan(rdec)
-
-        # Half Day Length (radians), (dawn:noon = noon:dusk)
-        # Paltridge and Platt eq [3.21]
-        if hour_angle <= -1.0:
-            rhlf_day_length = np.pi            # polar summer: sun never sets
-        elif hour_angle >= 1.0:
-            rhlf_day_length = 0.0              # polar winter: sun never rises
-        else:
-            rhlf_day_length = np.arccos(hour_angle)
-
-        # hrs
-        day_length = 24.0 * 2.0 * rhlf_day_length / (2.0 * np.pi)
-
-        # Daily solar irradiance without atmosphere, normalised by solar constant,
-        # with both energy fluxes in MJ/m2/day, calculated from solar geometry
-        # Paltridge and Platt eq [3.22]
-        solar_norm = (rhlf_day_length * np.sin(rlat) * np.sin(rdec) +
-                      np.cos(rlat) * np.cos(rdec) * np.sin(rhlf_day_length)) / np.pi
-
-        # Observed daily solar irradiance as frac of value from solar geometry
-        # (should be < 1), sw_rad (MJ m-2 d-1)
-        solar_frac_obs = sw_rad_day / (solar_norm * solar_constant + 1.0E-6)
-
-        sw_rad = np.zeros(48)
-
-        # disaggregate radiation
-        for i in xrange(1,48+1):
-
-            hour = i / 2.0
-
-            # Time in day frac (-0.5 to 0.5, zero at noon)
-            time_noon = float(hour) / 24.0 - 0.5
-
-            # Time in day frac (-Pi to Pi, zero at noon)
-            rtime = 2.0 * np.pi * time_noon
-
-            #print hour, time_noon, rtime
-            if (np.abs(rtime) < rhlf_day_length): # day: sun is up
-                # Paltridge and Platt eq [3.4]
-                sw_rad[i-1] = ((sw_rad_day / solar_norm) * (np.sin(rdec) *
-                              np.sin(rlat) + np.cos(rdec) * np.cos(rlat) *
-                              np.cos(rtime)))
-
-                # Need to half rad, as we are doing this over 48 timesteps and not
-                # 24, otherwise we will end up with a total which is double
-                # the sw_rad_tot
-                #sw_rad[i-1] /= 2.0
-            else:
-                sw_rad[i-1] = 0.0
-
-        # check the integration worked?
-        difference = sw_rad_day - np.sum(sw_rad / 48.)
-        print "*", difference, sw_rad_day, np.sum(sw_rad / 48.)
-
-        # Convert sw_rad (MJ/m2/day to J/m2/s = W/m2) to PAR (umol m-2 s-1)
-        par = sw_rad * self.MJ_TO_J * self.DAY_2_SEC * self.SW_2_PAR
-
-        return (par)
 
 if __name__ == "__main__":
 

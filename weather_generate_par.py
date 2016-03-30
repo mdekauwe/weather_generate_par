@@ -13,7 +13,7 @@ __author__  = "Martin De Kauwe"
 __version__ = "1.0 (16.03.2016)"
 __email__   = "mdekauwe@gmail.com"
 
-class DiurnalPar(object):
+class WeatherGeneratorPAR(object):
 
     def __init__(self, lat, lon):
 
@@ -57,7 +57,6 @@ class DiurnalPar(object):
         plt.ylabel("par (umol m$^{-2}$ s$^{-1}$)")
         plt.xlabel("Hour of day")
         plt.show()
-
 
     def estimate_dirunal_par(self, par_day, cos_zenith, diffuse_frac):
         """
@@ -475,5 +474,5 @@ if __name__ == "__main__":
     doy = 180.0
     sw_rad_day = 12.5 # mj m-2 d-1
 
-    P = DiurnalPar(lat, lon)
+    P = WeatherGeneratorPAR(lat, lon)
     P.main(doy, sw_rad_day)

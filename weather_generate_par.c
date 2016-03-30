@@ -6,17 +6,14 @@ int main(int argc, char **argv) {
     float par[NTIMESTEPS];
     float latitude = -23.575001;
     float longitude = 152.524994;
-    int i, j;
+    int j, doy = 180;
 
     /* MJ m-2 d-1 */
     float sw = 12.5;
 
-    for (i = 0; i < 365; i++) {
-
-        estimate_dirunal_par(latitude, longitude, i+1, sw, &(par[0]));
-        for (j = 0; j < NTIMESTEPS; j++) {
-            printf("%d %f\n", j+1, par[j]);
-        }
+    estimate_dirunal_par(latitude, longitude, doy, sw, &(par[0]));
+    for (j = 0; j < NTIMESTEPS; j++) {
+        printf("%d %f\n", j+1, par[j]);
     }
 
     return (EXIT_SUCCESS);
@@ -35,9 +32,15 @@ void estimate_dirunal_par(float lat, float lon, int doy, float sw_rad_day,
     float cos_bm[NTIMESTEPS], cos_df[NTIMESTEPS], sum_bm, sum_df;
     float zenith, rddf, rdbm, par_day, beam_rad, diffuse_rad;
 
-    /* MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1 */
+    /*
+    ** Conversion below works out to be ~0.5
+    ** MJ m-2 d-1 -> J m-2 s-1 = W m-2 -> umol m-2 s-1 -> MJ m-2 d-1
+    **/
+
     par_day = sw_rad_day * MJ_TO_J * DAY_2_SEC * SW_2_PAR * \
               UMOL_TO_J * J_TO_MJ * SEC_2_DAY;
+
+    /*par_day = sw_rad_day * SW_2_PAR_MJ;*/
 
     calculate_solar_geometry(doy, lat, lon, &(cos_zenith[0]));
     diffuse_frac = spitters(doy, par_day, cos_zenith);

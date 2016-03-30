@@ -27,7 +27,8 @@ class WeatherGeneratorPAR(object):
         self.SEC_2_DAY = 86400.0
         self.MJ_TO_J = 1E6
         self.DAY_2_SEC = 1.0 / self.SEC_2_DAY
-        self.HLFHR_2_SEC = 1.0 / 1800.0
+        self.SEC_2_HLFHR = 1800.0
+        self.HLFHR_2_SEC = 1.0 / self.SEC_2_HLFHR
         self.J_TO_UMOL = 4.57
         self.UMOL_TO_J = 1.0 / self.J_TO_UMOL
         self.UMOLPERJ = 4.57     # Conversion from J to umol quanta
@@ -47,8 +48,8 @@ class WeatherGeneratorPAR(object):
         par = self.estimate_dirunal_par(par_day, cos_zenith, diffuse_frac)
 
         # check disaggregation
-        print sw_rad_day, np.sum(par * self.PAR_2_SW * self.J_TO_MJ * self.SEC_2_DAY), "MJ m-2 d-1"
-        print sw_rad_day * self.MJ_TO_J * self.DAY_2_SEC * self.SW_2_PAR, np.sum(par), "umol m-2 s-1"
+        conv = self.PAR_2_SW * self.J_TO_MJ * self.SEC_2_HLFHR
+        print sw_rad_day, np.sum(par * conv), "MJ m-2 d-1"
 
 
         plt.plot(np.arange(1,48+1), par, "b-")

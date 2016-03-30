@@ -87,36 +87,36 @@ class WeatherGeneratorPAR(object):
 
         sum_bm = 0.0
         sum_df = 0.0
-        for i in xrange(1,48+1):
+        for i in xrange(48):
 
-            if cos_zenith[i-1] > 0.0:
-                zenith = acos(cos_zenith[i-1])
+            if cos_zenith[i] > 0.0:
+                zenith = acos(cos_zenith[i])
 
                 # set FBM = 0.0 for ZEN > 80 degrees
                 if zenith < 80.0 * pi / 180.0:
-                    cos_bm[i-1] = cos_zenith[i-1] * tau**(1.0 / cos_zenith[i-1])
+                    cos_bm[i] = cos_zenith[i] * tau**(1.0 / cos_zenith[i])
                 else:
-                    cos_bm[i-1] = 0.0
+                    cos_bm[i] = 0.0
 
-                cos_df[i-1] = cos_zenith[i-1]
-                sum_bm += cos_bm[i-1]
-                sum_df += cos_df[i-1]
+                cos_df[i] = cos_zenith[i]
+                sum_bm += cos_bm[i]
+                sum_df += cos_df[i]
 
-        for i in xrange(1,48+1):
+        for i in xrange(48):
 
             if sum_bm > 0.0:
-                rdbm = beam_rad * cos_bm[i-1] / sum_bm
+                rdbm = beam_rad * cos_bm[i] / sum_bm
             else:
                 rdbm = 0.0
 
             if sum_df > 0.0:
-                rddf = diffuse_rad * cos_df[i-1] / sum_df
+                rddf = diffuse_rad * cos_df[i] / sum_df
             else:
                 rddf = 0.0
 
             # MJ m-2 d-1 -> J m-2 s-1 -> umol m-2 s-1
             conv = self.MJ_TO_J * self.DAY_2_SEC * self.UMOLPERJ
-            par[i-1] = (rddf + rdbm) * conv
+            par[i] = (rddf + rdbm) * conv
 
         return par
 
